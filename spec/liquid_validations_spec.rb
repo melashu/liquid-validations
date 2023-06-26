@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative './spec_helper'
 
 class Mixin < ActiveRecord::Base
 end
@@ -62,4 +62,27 @@ describe LiquidValidations do
       @mixin.errors.full_messages.any? { |e| e == "You must include {{ josh_is_awesome }} in your content" }.must_equal true
     end
   end
+
+  describe '.validates_presence_of_liquid_filter' do
+     before do
+      Mixin.instance_eval do
+        validates_presence_of_liquid_filter :content, :filter => 'josh_is_awesome', max: "2"
+      end
+      @mixin = Mixin.new
+    end
+    it 'must be configured properly' do
+      proc { Mixin.instance_eval { validates_presence_of_liquid_filter :content } }.must_raise ArgumentError
+    end
+    it 'the record should be invalid when the specified filter and max is not present' do
+      @mixin.content = '{% josh_is_not_awesome %}'
+      @mixin.valid?.must_equal false
+    end
+
+    it 'should include the errors in the errors object' do
+      @mixin.content = 'josh_is_awesome'
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+  end
+  
 end
