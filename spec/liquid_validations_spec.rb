@@ -70,11 +70,13 @@ describe LiquidValidations do
       end
       @mixin = Mixin.new
     end
+
     it 'must be configured properly' do
       proc { Mixin.instance_eval { validates_presence_of_liquid_filter :content } }.must_raise ArgumentError
     end
+
     it 'the record should be invalid when the specified filter and max is not present' do
-      @mixin.content = '{% josh_is_not_awesome %}'
+      @mixin.content = 'josh_is_awesome'
       @mixin.valid?.must_equal false
     end
 
