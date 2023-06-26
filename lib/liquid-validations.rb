@@ -42,6 +42,25 @@ module LiquidValidations
     end
   end
 
+  def validates_presence_of_liquid_filter(*attr_names)
+    configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], filter: nil, max: nil }
+    configuration.update(attr_names.extract_options!)
+    
+    raise(ArgumentError, 'You must supply a filter or max to check for ') if configuration[:filter].blank? || configuration[:max].blank? 
+    validates_each attr_names, configuration do |record, attr_name, value|
+      value    = value.to_s
+      max      = configuration[:max].to_i
+      filter   = configuration[:filter].to_s
+      filter_r = /{%\s+#{filter}\s+(.*?)%}/
+      if !(value =~ filter_r)
+        record.errors.add(:base, "You must supply {% #{filter} %} in your #{ friendly_attr_name(attr_name) }")
+      elsif max && (value.scan(filter_r).size > max)
+       record.errors.add friendly_attr_name(attr_name), 'must not have more than :max filters', max: max
+      end
+    end
+    
+  end
+
   private
 
   def friendly_attr_name(attr_name)
