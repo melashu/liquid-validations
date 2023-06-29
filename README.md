@@ -21,7 +21,7 @@ In it's simplest form:
 class Article < ActiveRecord::Base
   validates_liquid_of :content
   validates_presence_of_liquid_variable :content, variable: 'very_important_variable'
-  validates_presence_of_liquid_filter :content, filter: 'your_filter', max: "1"
+  validates_presence_of_liquid_filter :content, filter: 'your_filter', max: 1
 end
 ```
 `validates_presence_of_liquid_filter` takes required `filter` and `max` property
