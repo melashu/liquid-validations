@@ -1,5 +1,4 @@
 require_relative './spec_helper'
-
 class Mixin < ActiveRecord::Base
 end
 
@@ -11,6 +10,12 @@ describe LiquidValidations do
   it 'should provide the validates_presence_of_liquid_variable method to ActiveRecord subclasses' do
     Mixin.must_respond_to(:validates_presence_of_liquid_variable)
   end
+
+  it 'should provide the validates_presence_of_liquid_filter method to ActiveRecord subclasses' do
+    Mixin.must_respond_to(:validates_presence_of_liquid_filter)
+  end
+
+
 
   describe '.validates_liquid_of' do
     before do
@@ -43,7 +48,6 @@ describe LiquidValidations do
       Mixin.instance_eval do
         validates_presence_of_liquid_variable :content, :variable => 'josh_is_awesome'
       end
-
       @mixin = Mixin.new
     end
 
@@ -66,13 +70,13 @@ describe LiquidValidations do
   describe '.validates_presence_of_liquid_filter' do
      before do
       Mixin.instance_eval do
-        validates_presence_of_liquid_filter :content, :filter => 'josh_is_awesome', max: "2"
+        validates_presence_of_liquid_filter :content, :filter => 'josh_is_awesome', max: 2
       end
-      @mixin = Mixin.new
+      @mixin = Mixin.new    
     end
 
     it 'must be configured properly' do
-      proc { Mixin.instance_eval { validates_presence_of_liquid_filter :content } }.must_raise ArgumentError
+      proc { Mixin.instance_eval { validates_presence_of_liquid_filter :content, filter: 'josh_is_awesome'} }.must_raise ArgumentError
     end
 
     it 'the record should be invalid when the specified filter and max is not present' do
@@ -85,6 +89,73 @@ describe LiquidValidations do
       @mixin.valid?
       @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
     end
+
+   
+    it 'must be valid when include filter' do
+      @mixin.content = '{% josh_is_awesome %} '
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+    end
+
+    it 'must be valid when filter is less than or equal max count' do
+      @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %}'
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+    end
+
+    it 'must be invalid when filter is greater than max count' do
+      @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_awesome %}'
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "content must not have more than max filters 2"}.must_equal true
+    end
+
+    it 'must be valid when using more complex filter' do
+      @mixin.content = "{% josh_is_awesome foobar, data-required='true' %}"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+    end
+
+    it 'must be invalid when using more complex filter' do
+      @mixin.content = "{% josh_is_awesome foobar, data-required='true' %}"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+    end
+
+    it 'must be invalid when using filter like { josh_is_awesome }' do
+      @mixin.content = "{ josh_is_awesome }"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when using filter like {% josh_is_awesome }' do
+      @mixin.content = "{% josh_is_awesome }"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when using filter like { josh_is_awesome %}' do
+      @mixin.content = "{ josh_is_awesome %}"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when using filter like {%% josh_is_awesome %%}' do
+      @mixin.content = "{%% josh_is_awesome %%}"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when using filter like %{ josh_is_awesome }%' do
+      @mixin.content = "%{ josh_is_awesome }%"
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when using filter like empty content' do
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
   end
   
 end
