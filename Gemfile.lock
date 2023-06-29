@@ -31,9 +31,13 @@ GEM
 
 PLATFORMS
   ruby
+  x64-mingw-ucrt
 
 DEPENDENCIES
   liquid-validations!
   minitest
   rake
   sqlite3
+
+BUNDLED WITH
+   2.4.13
