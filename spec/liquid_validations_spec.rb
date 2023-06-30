@@ -11,8 +11,8 @@ describe LiquidValidations do
     Mixin.must_respond_to(:validates_presence_of_liquid_variable)
   end
 
-  it 'should provide the validates_presence_of_liquid_filter method to ActiveRecord subclasses' do
-    Mixin.must_respond_to(:validates_presence_of_liquid_filter)
+  it 'should provide the validates_presence_of_liquid_tag method to ActiveRecord subclasses' do
+    Mixin.must_respond_to(:validates_presence_of_liquid_tag)
   end
 
 
@@ -67,16 +67,16 @@ describe LiquidValidations do
     end
   end
 
-  describe '.validates_presence_of_liquid_filter' do
+  describe '.validates_presence_of_liquid_tag' do
      before do
       Mixin.instance_eval do
-        validates_presence_of_liquid_filter :content, :filter => 'josh_is_awesome', max: 2
+        validates_presence_of_liquid_tag :content, :filter => 'josh_is_awesome', max: 2
       end
       @mixin = Mixin.new    
     end
 
     it 'must be configured properly' do
-      proc { Mixin.instance_eval { validates_presence_of_liquid_filter :content, filter: 'josh_is_awesome'} }.must_raise ArgumentError
+      proc { Mixin.instance_eval { validates_presence_of_liquid_tag :content, filter: 'josh_is_awesome'} }.must_raise ArgumentError
     end
 
     it 'the record should be invalid when the specified filter and max is not present' do
@@ -154,6 +154,12 @@ describe LiquidValidations do
     it 'must be invalid when using filter like empty content' do
       @mixin.valid?
       @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+    end
+
+    it 'must be invalid when filter is greater than max count' do
+      @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_'
+      @mixin.valid?
+      @mixin.errors.full_messages.any? { |e| e == "content must not have more than max filters 2"}.must_equal false
     end
 
   end
