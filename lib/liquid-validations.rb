@@ -42,7 +42,7 @@ module LiquidValidations
     end
   end
 
-  def validates_presence_of_liquid_filter(*attr_names)
+  def validates_presence_of_liquid_tag(*attr_names)
     configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], filter: nil, max: nil }
     configuration.update(attr_names.extract_options!)
     
