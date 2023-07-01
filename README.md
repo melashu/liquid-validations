@@ -29,7 +29,7 @@ end
 ``` ruby
 validates_presence_of_liquid_tag :content, 
                                   filter: 'head_content', 
-                                  max: '1'
+                                  max: 1
 ```
 
 
