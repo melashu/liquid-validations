@@ -2,9 +2,11 @@
 
 ActiveRecord style validations for Liquid content in your ActiveRecord models.
 
-This gem makes 2 class methods available to your models:
+This gem makes 3 class methods available to your models:
   * `validates_liquid_of` - Ensures that the liquid content is valid and has all opening/closing tags.
   * `validates_presence_of_liquid_variable` - Useful to ensure your user content contains the specified Liquid variable(s).
+  * `validates_presence_of_liquid_tag` - Ensure that your user content contains the specified tag(s) and does not exceed the maximum tag count limit.
+  
 
 ## Installation
 
@@ -21,9 +23,19 @@ In it's simplest form:
 class Article < ActiveRecord::Base
   validates_liquid_of :content
   validates_presence_of_liquid_variable :content, variable: 'very_important_variable'
+  validates_presence_of_liquid_tag :content, tag: 'your_tag', max: 1
 end
 ```
 
+`validates_presence_of_liquid_tag` takes required `tag` and `max` property
+
+``` ruby
+validates_presence_of_liquid_tag :content, 
+                                  tag: 'head_content', 
+                                  max: 1
+```
+
+```
 `validates_presence_of_liquid_variable` takes an optional `container` option like this:
 
 ``` ruby
