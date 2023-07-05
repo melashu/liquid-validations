@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 
 class Mixin < ActiveRecord::Base
 end
@@ -10,6 +10,10 @@ describe LiquidValidations do
 
   it 'should provide the validates_presence_of_liquid_variable method to ActiveRecord subclasses' do
     Mixin.must_respond_to(:validates_presence_of_liquid_variable)
+  end
+
+  it 'should provide the validates_presence_of_liquid_tag method to ActiveRecord subclasses' do
+    Mixin.must_respond_to(:validates_presence_of_liquid_tag)
   end
 
   describe '.validates_liquid_of' do
@@ -62,4 +66,101 @@ describe LiquidValidations do
       @mixin.errors.full_messages.any? { |e| e == "You must include {{ josh_is_awesome }} in your content" }.must_equal true
     end
   end
+
+  describe '.validates_presence_of_liquid_tag' do
+    before do
+     Mixin.instance_eval do
+       validates_presence_of_liquid_tag :content, :tag => 'josh_is_awesome', max: 2
+     end
+     @mixin = Mixin.new    
+   end
+
+   it 'must be configured properly' do
+     proc { Mixin.instance_eval { validates_presence_of_liquid_tag :content, tag: 'josh_is_awesome'} }.must_raise ArgumentError
+   end
+
+   it 'the record should be invalid when the specified tag and max is not present' do
+     @mixin.content = 'josh_is_awesome'
+     @mixin.valid?.must_equal false
+   end
+
+   it 'should include the errors in the errors object' do
+     @mixin.content = 'josh_is_awesome'
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+  
+   it 'must be valid when include tag' do
+     @mixin.content = '{% josh_is_awesome %} '
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+   end
+
+   it 'must be valid when tag is less than or equal max count' do
+     @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %}'
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+   end
+
+   it 'must be invalid when tag is greater than max count' do
+     @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_awesome %}'
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "content must not have more than max tags 2"}.must_equal true
+   end
+
+   it 'must be valid when using more complex tag' do
+     @mixin.content = "{% josh_is_awesome foobar, data-required='true' %}"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+   end
+
+   it 'must be invalid when using more complex tag' do
+     @mixin.content = "{% josh_is_awesome foobar, data-required='true' %}"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+   end
+
+   it 'must be invalid when using tag like { josh_is_awesome }' do
+     @mixin.content = "{ josh_is_awesome }"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when using tag like {% josh_is_awesome }' do
+     @mixin.content = "{% josh_is_awesome }"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when using tag like { josh_is_awesome %}' do
+     @mixin.content = "{ josh_is_awesome %}"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when using tag like {%% josh_is_awesome %%}' do
+     @mixin.content = "{%% josh_is_awesome %%}"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when using tag like %{ josh_is_awesome }%' do
+     @mixin.content = "%{ josh_is_awesome }%"
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when using tag like empty content' do
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal true
+   end
+
+   it 'must be invalid when tag is greater than max count' do
+     @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_'
+     @mixin.valid?
+     @mixin.errors.full_messages.any? { |e| e == "content must not have more than max tags 2"}.must_equal false
+   end
+
+ end
 end
