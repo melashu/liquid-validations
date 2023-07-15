@@ -56,9 +56,9 @@ module LiquidValidations
       if !(value =~ tag_r)
         record.errors.add(:base, "You must supply {% #{tag} %} in your #{ friendly_attr_name(attr_name) }")
       elsif presence && (value.scan(tag_r).size > max)
-       record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than max tags #{max}")
+       record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} {% #{tag} %}")
       elsif !presence && (value.scan(tag_r).size > max)
-        record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than max tags #{max}") 
+        record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} {% #{tag} %}") 
       end
     end
     

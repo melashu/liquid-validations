@@ -82,7 +82,7 @@ describe LiquidValidations do
       it 'must be invalid when tag is greater than max count' do
         @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_awesome %}'
         @mixin.valid?
-        @mixin.errors.full_messages.any? { |e| e == "content must not have more than max tags 2"}.must_equal true
+        @mixin.errors.full_messages.any? { |e| e == "content must not have more than 2 {% josh_is_awesome %}"}.must_equal true
       end
 
       it 'must be valid when tag less than max' do
@@ -170,13 +170,13 @@ describe LiquidValidations do
     it 'must be valid when tag like {% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_' do
       @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_'
       @mixin.valid?
-      @mixin.errors.full_messages.any? { |e| e == "content must not have more than max tags 2"}.must_equal false
+      @mixin.errors.full_messages.any? { |e| e == "content must not have more than 2 {% josh_is_awesome %}"}.must_equal false
     end
 
     it 'must be invalid when tag is greater than max count' do
       @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_awesome %}'
       @mixin.valid?
-      @mixin.errors.full_messages.any? { |e| e == "content must not have more than max tags 2"}.must_equal true
+      @mixin.errors.full_messages.any? { |e| e == "content must not have more than 2 {% josh_is_awesome %}"}.must_equal true
     end
   end
  end
