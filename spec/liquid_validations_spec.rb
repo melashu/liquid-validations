@@ -71,7 +71,7 @@ describe LiquidValidations do
     describe 'When tag presence is false ' do
       before do
         Mixin.instance_eval do
-          validates_liquid_tag :content, :tag => 'josh_is_awesome', presence: false, max: 2
+          validates_liquid_tag :content, :tag => 'john_is_awesome', presence: false, max: 2
         end
         @mixin = Mixin.new    
       end
@@ -80,19 +80,31 @@ describe LiquidValidations do
       end
 
       it 'must be invalid when tag is greater than max count' do
-        @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %} {% josh_is_awesome %}'
+        @mixin.content = '{% john_is_awesome %} {% john_is_awesome %} {% john_is_awesome %}'
         @mixin.valid?
-        @mixin.errors.full_messages.any? { |e| e == "content must not have more than 2 {% josh_is_awesome %}"}.must_equal true
+        @mixin.errors.full_messages.any? { |e| e == "content must not have more than 2 {% john_is_awesome %}"}.must_equal true
       end
 
       it 'must be valid when tag less than max' do
-        @mixin.content = '{% josh_is_awesome %} '
+        @mixin.content = '{% john_is_awesome %} '
         @mixin.valid?
-        @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
+        @mixin.errors.full_messages.any? { |e| e == "You must supply {% john_is_awesome %} in your content"}.must_equal false
+      end
+
+      it 'must be valid when the content does not include the tag' do
+        @mixin.content = '{% name %} '
+        @mixin.valid?
+        @mixin.errors.full_messages.any? { |e| e == "You must supply {% john_is_awesome %} in your content"}.must_equal false
+      end
+
+      it 'must be valid when the content is nil' do
+        @mixin.content = nil
+        @mixin.valid?
+        @mixin.errors.full_messages.any? { |e| e == "You must supply {% john_is_awesome %} in your content"}.must_equal false
       end
 
       it 'must be valid when tag equal to max' do
-        @mixin.content = '{% josh_is_awesome %} {% josh_is_awesome %}'
+        @mixin.content = '{% john_is_awesome %} {% john_is_awesome %}'
         @mixin.valid?
         @mixin.errors.full_messages.any? { |e| e == "You must supply {% josh_is_awesome %} in your content"}.must_equal false
       end

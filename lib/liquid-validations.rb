@@ -43,17 +43,17 @@ module LiquidValidations
   end
 
   def validates_liquid_tag(*attr_names)
-    configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], tag: nil, max: nil, presence: true }
+    configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], tag: nil, max: 0, presence: true }
     configuration.update(attr_names.extract_options!)
     
-    raise(ArgumentError, 'You must supply a tag and max to check for ') if (configuration[:tag].blank? || configuration[:max].blank? ) && configuration[:presence] 
+    raise(ArgumentError, 'You must supply a tag and max to check for ') if (configuration[:tag].blank? || configuration[:max].zero? ) && configuration[:presence] 
     validates_each attr_names, configuration do |record, attr_name, value|
       value    = value.to_s
       max      = configuration[:max]
       presence = configuration[:presence]
       tag   = configuration[:tag].to_s
       tag_r = /{%\s+#{tag}\s+(.*?)%}/
-      if !(value =~ tag_r)
+      if (!(value =~ tag_r) && presence)
         record.errors.add(:base, "You must supply {% #{tag} %} in your #{ friendly_attr_name(attr_name) }")
       elsif presence && (value.scan(tag_r).size > max)
        record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} {% #{tag} %}")
