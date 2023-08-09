@@ -24,7 +24,6 @@ module LiquidValidations
   def validates_presence_of_liquid_variable(*attr_names)
     configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], :variable => nil, :container => nil }
     configuration.update(attr_names.extract_options!)
-
     raise(ArgumentError, "You must supply a variable to check for") if configuration[:variable].blank?
 
     validates_each attr_names, configuration do |record, attr_name, value|
@@ -45,13 +44,34 @@ module LiquidValidations
   def validates_liquid_tag(*attr_names)
     configuration = { :message => I18n.translate('activerecord.errors.messages')[:invalid], tag: nil, max: 0, presence: true }
     configuration.update(attr_names.extract_options!)
-    
+    presence = configuration[:presence]
+     
+    if presence.is_a? Proc
+      presence = presence.yield
+    end
     raise(ArgumentError, 'You must supply a tag and max to check for ') if (configuration[:tag].blank? || configuration[:max].zero? ) && configuration[:presence] 
     validates_each attr_names, configuration do |record, attr_name, value|
       value    = value.to_s
       max      = configuration[:max]
-      presence = configuration[:presence]
-      tag   = configuration[:tag].to_s
+      patterns = []
+      tag   = configuration[:tag]
+      required_tag = ""
+      if tag.is_a? Array
+        patterns = tag.map do |e|
+            /{%\s+#{e}\s+(.*?)%}/
+        end
+        tag.each do |ele|
+          required_tag << "{% #{ele} %}"
+        end
+      if (!(patterns.all? {|p| p =~(value)}) && presence)
+        record.errors.add(:base, "You must supply #{required_tag} in your #{ friendly_attr_name(attr_name) }")
+      elsif presence && check_occurance(patterns, value, max)
+        record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} #{get_max_tag(tag, value, max)}")
+      elsif !presence && check_occurance(patterns, value, max)
+        record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} #{get_max_tag(tag, value, max)}")
+      end
+      else
+      tag =  configuration[:tag].to_s
       tag_r = /{%\s+#{tag}\s+(.*?)%}/
       if (!(value =~ tag_r) && presence)
         record.errors.add(:base, "You must supply {% #{tag} %} in your #{ friendly_attr_name(attr_name) }")
@@ -61,11 +81,29 @@ module LiquidValidations
         record.errors.add(:base, "#{friendly_attr_name(attr_name)} must not have more than #{max} {% #{tag} %}") 
       end
     end
+    end
     
   end
 
   private
 
+  def check_occurance(patterns, value, max) 
+    patterns.each do |p|
+      if value.scan(p).size > max
+          return true
+      end
+     end
+    return false
+   end
+  def get_max_tag(tag, value, max)
+    max_tag = ""
+    tag.each do |ele|
+      if value.scan(/{% #{ele} %}/).size > max
+        max_tag << "{% #{ele} %}"
+      end
+     end
+     max_tag
+  end
   def friendly_attr_name(attr_name)
     attr_name.to_s.humanize.downcase
   end
