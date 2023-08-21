@@ -16,6 +16,7 @@ def setup_db
   ActiveRecord::Schema.define(:version => 1) do
     create_table :mixins do |t|
       t.column :content, :text
+      t.column :verification_method, :string
       t.column :created_at, :datetime
       t.column :updated_at, :datetime
     end
@@ -28,7 +29,7 @@ def teardown_db
   end
 end
 
-class MiniTest::Spec
+class Minitest::Spec
   before do
     setup_db
   end
